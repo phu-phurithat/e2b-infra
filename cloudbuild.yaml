@@ -1,0 +1,47 @@
+steps:
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        apt-get update && apt-get install -y make
+        make -C packages/orchestrator build
+        make -C packages/client-proxy build-and-upload
+        make -C packages/api build-and-upload
+        make -C packages/db build-and-upload
+        make -C packages/clickhouse build-and-upload
+        make -C packages/docker-reverse-proxy build-and-upload
+
+  - name: 'golang:1.25'
+    id: 'envd_build'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        apt-get update && apt-get install -y make
+        make -C packages/envd build
+    waitFor: ['-']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: upload binarys
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        apt-get update && apt-get install -y make
+        make -C packages/orchestrator upload/clean-nfs-cache
+        make -C packages/orchestrator upload/template-manager
+        make -C packages/orchestrator upload/orchestrator
+        make -C packages/envd upload
+    waitFor:
+      - 'build'
+      - 'envd_build'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  env:
+    - 'GCP_REGION=$LOCATION'
+    - 'GCP_PROJECT_ID=$PROJECT_ID'
+    - 'DOCKER_BUILDKIT=1'
