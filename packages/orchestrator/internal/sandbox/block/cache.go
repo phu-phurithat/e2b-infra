@@ -242,7 +242,7 @@ func (c *Cache) Slice(off, length int64) ([]byte, error) {
 		return (*c.mmap)[off:end], nil
 	}
 
-	return nil, BytesNotAvailableError{}
+	return nil, fmt.Errorf("bytes not available at offset %d, length %d: %w", off, length, BytesNotAvailableError{})
 }
 
 func (c *Cache) isCached(off, length int64) bool {

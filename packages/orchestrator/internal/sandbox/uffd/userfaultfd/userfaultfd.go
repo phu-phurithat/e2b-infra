@@ -240,7 +240,7 @@ func (u *Userfaultfd) handleMissing(
 
 			u.logger.Error(ctx, "UFFD serve slice error", zap.Error(joinedErr))
 
-			return fmt.Errorf("failed to read from source: %w", joinedErr)
+			return fmt.Errorf("failed to read from source, offset %d, pagesize %d: %w", offset, pagesize, joinedErr)
 		}
 
 		var copyMode CULong
